@@ -62,7 +62,7 @@ class DNSserver():
                     #TODO: HANDLE COMMANDS
         pass
     
-    def acceptConnection():
+    def acceptConnection(self):
         conn_sckt, conn_addr = self.socket.accept()
 
         #TODO
@@ -70,7 +70,7 @@ class DNSserver():
 
         return conn_sckt, conn_addr, conn_type
 
-    def registerHandler():
+    def registerHandler(self):
         #TODO
 
         while True:
