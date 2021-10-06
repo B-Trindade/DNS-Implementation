@@ -4,7 +4,6 @@ import socket
 import multiprocessing
 import time
 from functools import lru_cache
-import pickle
 
 class Client():
     """TODO"""
@@ -21,6 +20,7 @@ def main():
         port = input('Port: ')
         cliSock.sendto("HOST".encode('utf-8'), (host, int(port)))  
         print('fui registrado?')
+        cliSock.sendto("www.google.com".encode('utf-8'), (host, int(port)))
     finally:
         cliSock.close()
 
