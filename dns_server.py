@@ -16,6 +16,11 @@ class DNSserver():
     The lookup after no ENTRY is found is implemented by the RESOLVER.
     """
 
+    # Class Variables
+    ENCODING = 'utf-8'
+    CONN_HOST = '' #TODO Define this
+    CONN_SERVER = '' #TODO
+
     def __init__(self, domain:str=None, parent:str=None) -> None:
         self.host = 'localhost'
         self.port = rand.randint(53000, 53999)
@@ -50,7 +55,7 @@ class DNSserver():
                 if ready == self.socket:
                     conn_sckt, conn_addr, conn_type = acceptConnection()
                     
-                    if conn_type == HOST or SERVER:
+                    if conn_type == CONN_HOST or CONN_SERVER:
                         # spawns a thread to handle any new nodes (Host or Server)
                         reg = threading.Thread(target=registerHandler, args=())
                         reg.start()
@@ -65,14 +70,16 @@ class DNSserver():
     def acceptConnection(self):
         conn_sckt, conn_addr = self.socket.accept()
 
-        #TODO
         # get incoming conn's node type and return
+        data = conn_sckt.recv(1024)
+        #TODO: IMPLEMENT SINGLE MESSAGE WHERE FIRST N BYTES SIGNAL CONNECTION TYPE
+        # THIS AVOIDS HAVING TO SEND 2 DIFFERENT DNS MESSAGES str(data[:N],encoding)
+        conn_type = str(data, encoding=ENCODING)
 
         return conn_sckt, conn_addr, conn_type
 
     def registerHandler(self):
         #TODO
 
-        while True:
-            pass
+
         pass
