@@ -1,7 +1,6 @@
 """TODO"""
 
 import time
-import grpc
 import socket
 
 class DNSresolver(root):
