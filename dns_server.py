@@ -9,6 +9,8 @@ import sys
 import time
 import select as s
 import dnslib as dns
+import pickle
+from utils import *
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -66,11 +68,10 @@ class DNSserver():
 
                 for ready in r:
                     if ready == self.socket:
-                        conn_addr, conn_type = self.receiveMessage()
-                        
-                        if conn_type == self.CONN_HOST or self.CONN_SERVER:
-                            # spawns a thread to handle any new nodes (Host or Server)
-                            reg = self.registerHandler(conn_type)
+                        msg, addr = self.receiveMessage()
+
+                        if msg is RegisterMsg:
+                            self.registerHandler(msg, addr)
                             reg.join()
                         else:
                             #TODO: treat client with response
@@ -87,32 +88,27 @@ class DNSserver():
     
     def receiveMessage(self):
         # get incoming conn's node type and return
-        data, conn_addr = self.socket.recvfrom(1024)
+        data, addr = self.socket.recvfrom(1024)
 
-        conn_type = str(data, encoding=self.ENCODING)
+        data = pickle.loads(data)
 
-        return conn_addr, conn_type
+        return data, addr
 
     @threaded
-    def registerHandler(self, conn_type):
+    def registerHandler(self, msg: RegisterMsg, addr):
         
         while True:
-            # receives the message containing:
-            #   Host    - name and addr
-            #   Server  - domain and addr
-            data, conn_addr = self.socket.recvfrom(1024)
-            name = str(data, encoding=self.ENCODING)
 
             lock.acquire()
-            if conn_type == self.CONN_HOST:
-                self.hosts[name] = conn_addr
+            if msg.type == TypeEnum.HOST:
+                self.hosts[msg.name] = addr
                 break
-            elif conn_type == self.CONN_SERVER:
-                self.servers[name] = conn_addr
+            elif msg.type == TypeEnum.SERVER:
+                self.servers[msg.name] = addr
                 break
 
-        print(f'-> Novo {conn_type} registrado:')
-        print(f'    -{name}     -{conn_addr}')
+        print(f'-> Novo {msg.type} registrado:')
+        print(f'    -{msg.name}     -{addr}')
         
         pass
 
