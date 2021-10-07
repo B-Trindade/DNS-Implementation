@@ -1,14 +1,22 @@
 """TODO"""
 
-import socket
-import multiprocessing
 import time
+import socket
+import random as rand
+import multiprocessing
 from functools import lru_cache
+from dns_resolver import DNSresolver as Resolver
 
 class Client():
     """TODO"""
     
     def __init__(self):
+        self.host = 'localhost'
+        self.port = rand.randint(50000, 52999)
+
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        self.resolver = Resolver()
         pass
 
 
