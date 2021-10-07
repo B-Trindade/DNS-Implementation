@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 class TypeEnum(Enum):
-    HOST = 'host'
-    SERVER = 'server'
+    HOST = 'Host'
+    SERVER = 'Server'
 
 @dataclass
 class RegisterMsg:

@@ -41,7 +41,7 @@ def register_host(host_sock):
     host_sock.sendto(pickle.dumps(data), server_addr)
     try:
         host_sock.settimeout(TIMEOUT)
-        data, addr = host_sock.recvfrom(1024)
+        data, _ = host_sock.recvfrom(1024)
         host_sock.settimeout(None)
         result = pickle.loads(data)
         if not result.success:
