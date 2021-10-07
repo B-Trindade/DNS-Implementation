@@ -14,3 +14,11 @@ class RegisterMsg:
 class RegisterResultMsg:
     success: bool
     error_text: str = None
+
+@dataclass
+class PingMsg:
+    name: str
+
+@dataclass
+class PingResultMsg:
+    value: bool

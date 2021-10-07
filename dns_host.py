@@ -22,6 +22,19 @@ def create_host_socket():
     print(f'Host started\nIP: {HOST_IP}\nPort:{HOST_PORT}')
     return sock
 
+def handle_ping(host_name: str, host_sock: socket.socket):
+    '''Recebe a mensagem de ping e envia uma mensagem de volta, 
+    indicando se é de fato o host que foi pingado.
+    '''
+    data, addr = host_sock.recvfrom(1024)
+    msg: PingMsg = pickle.loads(data)
+    if type(msg) != PingMsg:
+        print('Host recebeu uma mensagem que não é ping.', msg)
+        return
+    result = host_name == msg.name
+    response = PingResultMsg(result)
+    host_sock.sendto(pickle.dumps(response), addr)
+
 def register_host(host_sock):
     host_name, server_addr = get_host_info()
     data = RegisterMsg(TypeEnum.HOST, host_name)
@@ -39,6 +52,7 @@ def register_host(host_sock):
             exit()
         else:
             print(f'Host "{host_name}" registrado com sucesso!')
+            return host_name
     except socket.timeout:
         print('O servidor não respondeu dentro do tempo esperado. '
             'Tente novamente mais tarde.\n'
@@ -53,7 +67,7 @@ def register_host(host_sock):
 def main():
     host_sock = create_host_socket()
 
-    register_host(host_sock)
+    host_name = register_host(host_sock)
 
     entry_points = [host_sock, sys.stdin]
 
@@ -62,10 +76,7 @@ def main():
     while True:
         for ready in r:
             if ready == host_sock:
-                # é um ping, responder
-                data, addr = host_sock.recvfrom(1024)
-                msg = pickle.loads(data)
-                print(f'{addr}: {msg}')
+                handle_ping(host_name, host_sock)
             elif ready == sys.stdin:
                 cmd = input()
                 if cmd == CMD_END:
