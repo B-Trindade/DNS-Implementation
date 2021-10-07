@@ -12,7 +12,7 @@ class DNSresolver():
     DNS server tree through iterative lookups as well as caching recent results.
     """
 
-    def __init__(self, question, cliSocket) -> None:
+    def __init__(self, question: str, cliSocket: socket.socket) -> None:
         self.question = question
         self.socket = cliSocket
 
@@ -41,7 +41,7 @@ class DNSresolver():
                         self.curr_name = response.questions[0]
                         self.curr_addr = response.short()
 
-                        if resolveCurrentName(curr_name, curr_addr):
+                        if self.resolveCurrentName(curr_name, curr_addr):
                             return self.curr_addr
         finally:
             self.socket.close()

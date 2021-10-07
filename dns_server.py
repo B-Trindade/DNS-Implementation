@@ -55,6 +55,7 @@ class DNSserver():
         self.subdomains = {}
 
         # starts the server socket using UDP
+        # TODO: colocar isso no start?
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip, self.port))
         # select entry points
