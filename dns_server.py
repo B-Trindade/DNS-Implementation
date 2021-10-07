@@ -34,16 +34,23 @@ class DNSserver():
 
     def __init__(self) -> None:
         self.ip = 'localhost' # restringe para processos internos por eficiencia
-        self.port = rand.randint(53000, 53999)
         
         self.domain = input('Entre com o nome do domínio (para root use "."): ')
         if self.domain != '.':
+            # address 127.0.0.1:53000 is reserved for the root server
+            self.port = rand.randint(53001, 53999)
+
+            # as this runs locally, 'localhost' is set, but
+            # if ran on different machines and input would be shown
             parent_ip = 'localhost' # input('Entre com o endereço IPv4 do server pai: ')
             parent_port = input('Entre com a porta do server pai: ')
             self.parent_addr = (parent_ip, int(parent_port))
         else:
+            # root address must be known
+            self.port = 53000
             self.parent_addr = None
 
+        # dict mapping hosts and servers to their respective ips
         self.hosts = {}
         self.subdomains = {}
 
@@ -59,6 +66,45 @@ class DNSserver():
     def __enter__(self):
         return self
 
+    def start(self):
+        print('\n===================================================')
+        print(f'Server hospedado em: "{self.ip}:{self.port}".')
+        print(f'Domínio: {self.domain}')
+        print('===================================================\n')
+
+        #self.socket.setblocking(False)
+        try:
+            if self.parent_addr is not None:
+                self.register_in_parent()
+            while True:
+                r, w, x = s.select(self.entry_points, [], [])
+
+                for ready in r:
+                    if ready == self.socket:
+                        msg, addr = self.receiveMessage()
+
+                        if type(msg) == RegisterMsg:
+                            reg = self.registerHandler(msg, addr)
+                            reg.join()
+                        else:
+                            #TODO: treat client with response
+
+                            pass
+                    elif ready == sys.stdin:
+                        cmd = input()
+                        print('Server> ' + cmd)
+                        if cmd == CMD_END:
+                            self.socket.close()
+                        elif cmd == CMD_LIST_HOSTS:
+                            print(self.hosts)
+                        elif cmd == CMD_LIST_SUBDOMAINS:
+                            print(self.subdomains)
+                        
+        except Exception as e:
+            print('Servidor encerrado.', e)
+        pass
+    
+    #TODO: ADICIONAR COMENTÁRIOS
     def register_in_parent(self):
         data = RegisterMsg(TypeEnum.SERVER, self.domain)
         self.socket.sendto(pickle.dumps(data), self.parent_addr)
@@ -86,43 +132,6 @@ class DNSserver():
             print('Encerrando execução...')
             exit()
 
-    def start(self):
-        print('\n===================================================')
-        print(f'Server hospedado em: "{self.ip}:{self.port}".')
-        print(f'Domínio: {self.domain}')
-        print('===================================================\n')
-
-        #self.socket.setblocking(False)
-        try:
-            if self.parent_addr is not None:
-                self.register_in_parent()
-            while True:
-                r, w, x = s.select(self.entry_points, [], [])
-
-                for ready in r:
-                    if ready == self.socket:
-                        msg, addr = self.receiveMessage()
-
-                        if type(msg) == RegisterMsg:
-                            reg = self.registerHandler(msg, addr)
-                            reg.join()
-                        else:
-                            #TODO: treat client with response
-                            pass
-                    elif ready == sys.stdin:
-                        cmd = input()
-                        print('server> ' + cmd)
-                        if cmd == CMD_END:
-                            self.socket.close()
-                        elif cmd == CMD_LIST_HOSTS:
-                            print(self.hosts)
-                        elif cmd == CMD_LIST_SUBDOMAINS:
-                            print(self.subdomains)
-                        #TODO: HANDLE COMMANDS
-        except Exception as e:
-            print('Servidor encerrado.', e)
-        pass
-    
     def receiveMessage(self):
         # get incoming conn's node type and return
         data, addr = self.socket.recvfrom(1024)
@@ -133,6 +142,7 @@ class DNSserver():
 
     @threaded
     def registerHandler(self, msg: RegisterMsg, addr):
+
         self.lock.acquire()
         if msg.type == TypeEnum.HOST:
             self.hosts[msg.name] = addr
@@ -147,6 +157,7 @@ class DNSserver():
         print(f'Novo {msg.type.value} registrado:')
         print(f'{msg.name} => {addr}')
 
+    #TODO
     def generateResponse():
         pass
 
