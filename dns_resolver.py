@@ -37,8 +37,10 @@ class DNSresolver():
                         response = pickle.loads(response)
 
                         self.logs.append(response)
+                        print(response)
+                        print('\n')
 
-                        self.curr_name = response.questions[0]
+                        self.curr_name = self.updateName(self.curr_name) 
                         self.curr_addr = response.short()
 
                         if self.resolveCurrentName(self.curr_name, self.curr_addr):
@@ -50,7 +52,7 @@ class DNSresolver():
 
     def resolveCurrentName(self, curr_name: str, curr_addr) -> bool:
         """returns true if destination has been reached (name has been resolved)"""
-        curr_name = self.updateName(curr_name)
+        #curr_name = self.updateName(curr_name)
         if curr_name == '':
             return True
         
@@ -61,10 +63,18 @@ class DNSresolver():
         return False
 
     def updateName(self, curr_name: str) -> str:
+        print(curr_name)
         names = curr_name.split('.')
+        print(names)
         new_name = ''
-        for i in range(len(names) - 1):
-            new_name += names[i] + '.'
+        if len(names) > 2:
+            for i in range(len(names) - 2):
+                new_name += names[i] + '.'
+        elif len(names) == 2:
+            new_name = names[0] + '.'
+            if new_name == curr_name:
+                return ''
+        print(new_name)
         return new_name
     
     def formatAddress(self, curr_addr: str) -> int:

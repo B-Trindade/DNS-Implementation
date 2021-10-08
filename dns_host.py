@@ -4,6 +4,7 @@ from select import select
 import random as rand
 import pickle
 from utils import *
+import dnslib as dns
 
 
 CMD_END = 'end'
@@ -59,13 +60,19 @@ class DNSHost():
         '''Recebe a mensagem de ping e envia uma mensagem de volta, 
         indicando se é de fato o host que foi pingado.
         '''
-        data, addr = self.sock.recvfrom(1024)
-        msg: PingMsg = pickle.loads(data)
-        if type(msg) != PingMsg:
-            print('Host recebeu uma mensagem que não é ping.', msg)
-            return
-        result = self.name == msg.name
-        response = PingResultMsg(result)
+        data, addr = self.sock.recvfrom(4096)
+        msg = pickle.loads(data)
+        port = str(self.port)
+
+        question = str(msg.questions[0]).replace(';', '')
+        address = f'{port[0]}{port[1]}.{port[2]}.{port[3]}.{port[4]}'
+
+        response = dns.DNSRecord(
+            dns.DNSHeader(qr=1,aa=1,ra=0),
+            q=dns.DNSQuestion(question),
+            a=dns.RR(question, rdata=dns.A(address))
+        )      
+
         self.sock.sendto(pickle.dumps(response), addr)
 
     def close(self):
