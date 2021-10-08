@@ -53,7 +53,7 @@ def main():
             client.close()
             break
         else:
-            result = client.resolve(cmd)
+            result = client.resolve(cmd).replace('.','')
             print(result)
             print()
 
