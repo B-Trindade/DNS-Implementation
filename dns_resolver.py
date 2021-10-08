@@ -5,6 +5,7 @@ import socket
 import select as s
 import pickle
 import dnslib as dns
+from functools import lru_cache
 
 class DNSresolver():
     """
@@ -21,7 +22,8 @@ class DNSresolver():
         self.curr_name = question + '.'
         self.curr_addr = 53000
         pass
-
+    
+    #@lru_cache
     def getServerIP(self):
         # sends the first message that goes to the root server
         q = dns.DNSRecord.question(self.question)
@@ -37,8 +39,6 @@ class DNSresolver():
                         response = pickle.loads(response)
 
                         self.logs.append(response)
-                        print(response)
-                        print('\n')
 
                         self.curr_name = self.updateName(self.curr_name) 
                         self.curr_addr = response.short()
@@ -63,9 +63,7 @@ class DNSresolver():
         return False
 
     def updateName(self, curr_name: str) -> str:
-        print(curr_name)
         names = curr_name.split('.')
-        print(names)
         new_name = ''
         if len(names) > 2:
             for i in range(len(names) - 2):
@@ -74,7 +72,6 @@ class DNSresolver():
             new_name = names[0] + '.'
             if new_name == curr_name:
                 return ''
-        print(new_name)
         return new_name
     
     def formatAddress(self, curr_addr: str) -> int:
