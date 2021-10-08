@@ -31,11 +31,10 @@ class Client():
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip, self.port))
         print('\n===================================================')
-        print(f'Cliente hospedado em: "{self.ip}:{self.port}".')
         print(f'Seja bem vindo!')
         print('===================================================\n')
 
-    def resolve(self, question: str) -> str:
+    def resolve(self, question: str):
         resolver = Resolver(question, self.socket)
         return resolver.getServerIP()
 

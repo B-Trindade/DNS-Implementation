@@ -82,15 +82,15 @@ class DNSserver():
 
                 for ready in r:
                     if ready == self.socket:
-                        msg, addr = self.receiveMessage()
+                        msg, client_addr = self.receiveMessage()
 
                         if type(msg) == RegisterMsg:
-                            reg = self.registerHandler(msg, addr)
+                            reg = self.registerHandler(msg, client_addr)
                             reg.join()
                         else:
-                            #TODO: treat client with response
-
-                            pass
+                            response = self.generateResponse(msg)                           
+                            self.socket.sendto(response.pack(), client_addr)
+                            
                     elif ready == sys.stdin:
                         cmd = input()
                         print('Server> ' + cmd)
@@ -135,9 +135,12 @@ class DNSserver():
 
     def receiveMessage(self):
         # get incoming conn's node type and return
-        data, addr = self.socket.recvfrom(1024)
+        data, addr = self.socket.recvfrom(4096)
 
-        data = pickle.loads(data)
+        if addr[1] < 53000:
+            data = pickle.loads(data)
+        else:
+            data = dns.DNSRecord.parse(data)
 
         return data, addr
 
@@ -158,9 +161,30 @@ class DNSserver():
         print(f'Novo {msg.type.value} registrado:')
         print(f'{msg.name} => {addr}')
 
-    #TODO
-    def generateResponse():
-        pass
+    def generateResponse(self, msg):
+
+        # !! if running on different machines, use rdata=dns.A(question) !!
+        question = str(msg.short())
+
+        # !!!encodes the port in IP format (USE ONLY IF RUNNING ON LOCALHOSTS)!!!
+        q_parts = question.split('.')
+        name = q_parts[-2] # gets the next server/host
+
+        addr = ''
+        if name in self.hosts.keys():
+            addr = str(self.hosts.get(name))
+        elif name in self.servers.keys():
+            addr = str(self.servers.get(name))
+        address = addr[:1] + '.' + addr[2] + '.' + addr[3] + '.' + addr[4]
+
+        # treat client with response
+        response = dns.DNSRecord(
+            dns.DNSHeader(qr=1,aa=1,ra=0),
+            q=dns.DNSQuestion(question),
+            a=dns.RR(question, rdata=dns.A(address))
+        )                    
+
+        return response
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
         self.socket.close()
