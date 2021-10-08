@@ -161,14 +161,11 @@ class DNSserver():
     def generateResponse(self, msg):
         # !! if running on different machines, use rdata=dns.A(question) !!
         question = str(msg.questions[0]).replace(';', '')
-        print('========================')
-        print(question)
         # !!!encodes the port in IP format (USE ONLY IF RUNNING ON LOCALHOSTS)!!!
         q_parts = question.split('.')
-        print(q_parts)
 
         name = q_parts[-2] # gets the next server/host
-        print(name)
+
         addr = ''
         if name in self.hosts.keys():
             addr = str(self.hosts.get(name))
@@ -176,8 +173,7 @@ class DNSserver():
             addr = str(self.subdomains.get(name))
         
         address = addr[0] + addr[1] + '.' + addr[2] + '.' + addr[3] + '.' + addr[4]
-        print(address)
-        print('=========================')
+
         # treat client with response
         response = dns.DNSRecord(
             dns.DNSHeader(qr=1,aa=1,ra=0),
