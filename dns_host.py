@@ -20,7 +20,9 @@ class DNSHost():
 
     def start(self):
         self.sock.bind((self.ip, self.port))
-        print(f'Host started\nIP: {self.ip}\nPort:{self.port}')
+        print('\n===================================================')
+        print(f'Host hospedado em: "{self.ip}:{self.port}".')
+        print('===================================================\n')
 
     def register_host(self):
         self.get_host_info()
@@ -51,9 +53,9 @@ class DNSHost():
             exit()
 
     def get_host_info(self):
-        self.name = input('Nome do host:')
+        self.name = input('Entre com o nome do domínio: ')
         parent_ip = 'localhost' #input('IP do servidor:')
-        parent_port = input('Porta do servidor:')
+        parent_port = input('Entre com a porta do server pai: ')
         self.parent_addr = (parent_ip, int(parent_port))
 
     def handle_ping(self):
