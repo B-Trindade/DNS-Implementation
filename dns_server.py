@@ -89,7 +89,7 @@ class DNSserver():
                             reg.join()
                         else:
                             response = self.generateResponse(msg)                           
-                            self.socket.sendto(response.pack(), client_addr)
+                            self.socket.sendto(pickle.dumps(response), client_addr)
                             
                     elif ready == sys.stdin:
                         cmd = input()
@@ -136,11 +136,7 @@ class DNSserver():
     def receiveMessage(self):
         # get incoming conn's node type and return
         data, addr = self.socket.recvfrom(4096)
-
-        if addr[1] < 53000:
-            data = pickle.loads(data)
-        else:
-            data = dns.DNSRecord.parse(data)
+        data = pickle.loads(data)
 
         return data, addr
 

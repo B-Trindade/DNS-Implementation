@@ -3,6 +3,7 @@
 import time
 import socket
 import select as s
+import pickle
 import dnslib as dns
 
 class DNSresolver():
@@ -24,8 +25,7 @@ class DNSresolver():
     def getServerIP(self):
         # sends the first message that goes to the root server
         q = dns.DNSRecord.question(self.question)
-        q = q.pack() # makes packet ready to send
-        self.socket.sendto(q, ('localhost', self.curr_addr))
+        self.socket.sendto(pickle.dumps(q), ('localhost', self.curr_addr))
 
         try:
             while True:
@@ -34,14 +34,14 @@ class DNSresolver():
                 for ready in r:
                     if ready == self.socket:
                         response, server_addr = self.socket.recvfrom(4096)
-                        response = dns.DNSRecord.parse(response)
+                        response = pickle.loads(response)
 
                         self.logs.append(response)
 
                         self.curr_name = response.questions[0]
                         self.curr_addr = response.short()
 
-                        if self.resolveCurrentName(curr_name, curr_addr):
+                        if self.resolveCurrentName(self.curr_name, self.curr_addr):
                             return self.curr_addr
         finally:
             self.socket.close()
@@ -55,10 +55,9 @@ class DNSresolver():
             return True
         
         q = dns.DNSRecord.question(curr_name)
-        q.pack()
         curr_addr = self.formatAddress(curr_addr)
 
-        self.socket.sendto(q, ('localhost', curr_addr))
+        self.socket.sendto(pickle.dumps(q), ('localhost', curr_addr))
         return False
 
     def updateName(self, curr_name: str) -> str:
