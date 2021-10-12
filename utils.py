@@ -22,3 +22,7 @@ class PingMsg:
 @dataclass
 class PingResultMsg:
     value: bool
+
+@dataclass
+class SubdomainNotFoundMsg:
+    subdomain: str

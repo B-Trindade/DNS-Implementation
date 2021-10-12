@@ -7,6 +7,10 @@ import pickle
 import dnslib as dns
 from functools import lru_cache
 
+from utils import SubdomainNotFoundMsg
+
+TIMEOUT = 3
+
 class DNSresolver():
     """
     The resolver must be able to take in multiple request simultaneously,
@@ -17,6 +21,7 @@ class DNSresolver():
     def __init__(self, question: str, cliSocket: socket.socket) -> None:
         self.question = question
         self.socket = cliSocket
+        self.socket.settimeout(TIMEOUT)
 
         self.logs = []
         self.curr_name = question + '.'
@@ -31,24 +36,27 @@ class DNSresolver():
 
         try:
             while True:
-                r, w, x = s.select([self.socket], [], [])
+                response, server_addr = self.socket.recvfrom(4096)
+                response = pickle.loads(response)
 
-                for ready in r:
-                    if ready == self.socket:
-                        response, server_addr = self.socket.recvfrom(4096)
-                        response = pickle.loads(response)
+                if type(response) == dns.DNSRecord:
+                    self.logs.append(response)
+                    self.updateName()
+                    self.curr_addr = response.short()
 
-                        self.logs.append(response)
+                    if self.resolveCurrentName(self.curr_name, self.curr_addr):
+                        return self.curr_addr.replace('.', '')
 
-                        self.curr_name = self.updateName(self.curr_name) 
-                        self.curr_addr = response.short()
+                elif type(response) == SubdomainNotFoundMsg:
+                    return f'O subdomínio {response.subdomain} no servidor {server_addr} não foi encontrado.'
 
-                        if self.resolveCurrentName(self.curr_name, self.curr_addr):
-                            return self.curr_addr
-        finally:
-            self.socket.close()
+                else:
+                    return f'O servidor {server_addr} retornou uma mensagem inesperada.'
 
-        pass
+        except socket.timeout:
+            return ('Não foi possível encontrar o endereço informado.'
+            'Durante a busca iterativa, um dos servidores não respondeu '
+            'dentro do tempo esperado.')
 
     def resolveCurrentName(self, curr_name: str, curr_addr) -> bool:
         """returns true if destination has been reached (name has been resolved)"""
@@ -62,17 +70,18 @@ class DNSresolver():
         self.socket.sendto(pickle.dumps(q), ('localhost', curr_addr))
         return False
 
-    def updateName(self, curr_name: str) -> str:
-        names = curr_name.split('.')
+    def updateName(self):
+        names = self.curr_name.split('.')
         new_name = ''
         if len(names) > 2:
             for i in range(len(names) - 2):
                 new_name += names[i] + '.'
         elif len(names) == 2:
             new_name = names[0] + '.'
-            if new_name == curr_name:
-                return ''
-        return new_name
+            if new_name == self.curr_name:
+                self.curr_name = ''
+                return
+        self.curr_name = new_name
     
     def formatAddress(self, curr_addr: str) -> int:
         # separates the encoded port (53.x.x.x) into different strings

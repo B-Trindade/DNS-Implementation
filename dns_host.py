@@ -59,9 +59,6 @@ class DNSHost():
         self.parent_addr = (parent_ip, int(parent_port))
 
     def handle_ping(self):
-        '''Recebe a mensagem de ping e envia uma mensagem de volta, 
-        indicando se é de fato o host que foi pingado.
-        '''
         data, addr = self.sock.recvfrom(4096)
         msg = pickle.loads(data)
         port = str(self.port)

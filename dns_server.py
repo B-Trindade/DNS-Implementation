@@ -83,7 +83,6 @@ class DNSserver():
                 for ready in r:
                     if ready == self.socket:
                         msg, client_addr = self.receiveMessage()
-                        print(msg)
 
                         if type(msg) == RegisterMsg:
                             reg = self.registerHandler(msg, client_addr)
@@ -106,8 +105,10 @@ class DNSserver():
             print('Servidor encerrado.', e)
         pass
     
-    #TODO: ADICIONAR COMENTÁRIOS
     def register_in_parent(self):
+        '''Sends a RegisterMsg to the server parent and receives the answer.
+        If the register is not succeeded, the Server will be ended.
+        '''
         data = RegisterMsg(TypeEnum.SERVER, self.domain)
         self.socket.sendto(pickle.dumps(data), self.parent_addr)
         try:
@@ -135,7 +136,6 @@ class DNSserver():
             exit()
 
     def receiveMessage(self):
-        # get incoming conn's node type and return
         data, addr = self.socket.recvfrom(4096)
         data = pickle.loads(data)
 
@@ -166,22 +166,24 @@ class DNSserver():
 
         name = q_parts[-2] # gets the next server/host
 
-        addr = ''
-        if name in self.hosts.keys():
-            addr = str(self.hosts.get(name))
-        elif name in self.subdomains.keys():
-            addr = str(self.subdomains.get(name))
-        
-        address = addr[0] + addr[1] + '.' + addr[2] + '.' + addr[3] + '.' + addr[4]
+        if name in self.hosts:
+            return self.createDNSRecordResponse(question, self.hosts.get(name))
+        elif name in self.subdomains:
+            return self.createDNSRecordResponse(question, self.subdomains.get(name))
+        else:
+            return SubdomainNotFoundMsg(name)
+
+    def createDNSRecordResponse(self, question, addr):
+        str_addr = str(addr)
+        address = str_addr[0] + str_addr[1] + '.' + str_addr[2] + '.' + str_addr[3] + '.' + str_addr[4]
 
         # treat client with response
-        response = dns.DNSRecord(
+        return dns.DNSRecord(
             dns.DNSHeader(qr=1,aa=1,ra=0),
             q=dns.DNSQuestion(question),
             a=dns.RR(question, rdata=dns.A(address))
-        )                    
+        )    
 
-        return response
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
         self.socket.close()
