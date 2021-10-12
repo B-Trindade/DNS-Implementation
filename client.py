@@ -36,7 +36,7 @@ class Client():
 
     def resolve(self, question: str):
         resolver = Resolver(question, self.socket)
-        return resolver.getServerIP()
+        return resolver.getHostIP()
 
     def close(self):
         print('Cliente encerrado! Até logo!')

@@ -7,7 +7,7 @@ import pickle
 import dnslib as dns
 from functools import lru_cache
 
-from utils import SubdomainNotFoundMsg
+from utils import PingMsg, PingResultMsg, SubdomainNotFoundMsg
 
 TIMEOUT = 3
 
@@ -28,8 +28,7 @@ class DNSresolver():
         self.curr_addr = 53000
         pass
     
-    #@lru_cache
-    def getServerIP(self):
+    def getHostIP(self):
         # sends the first message that goes to the root server
         q = dns.DNSRecord.question(self.question)
         self.socket.sendto(pickle.dumps(q), ('localhost', self.curr_addr))
@@ -37,6 +36,7 @@ class DNSresolver():
         try:
             while True:
                 response, server_addr = self.socket.recvfrom(4096)
+                print(f'Resolver recebeu mensagem de {server_addr}')
                 response = pickle.loads(response)
 
                 if type(response) == dns.DNSRecord:
@@ -45,7 +45,8 @@ class DNSresolver():
                     self.curr_addr = response.short()
 
                     if self.resolveCurrentName(self.curr_name, self.curr_addr):
-                        return self.curr_addr.replace('.', '')
+                        host_ip = self.curr_addr.replace('.', '')
+                        return self.ping_host(host_ip)
 
                 elif type(response) == SubdomainNotFoundMsg:
                     return f'O subdomínio {response.subdomain} no servidor {server_addr} não foi encontrado.'
@@ -57,6 +58,23 @@ class DNSresolver():
             return ('Não foi possível encontrar o endereço informado.'
             'Durante a busca iterativa, um dos servidores não respondeu '
             'dentro do tempo esperado.')
+
+    def ping_host(self, host_ip):
+        ping = PingMsg(self.question)
+        self.socket.sendto(pickle.dumps(ping), ('localhost', int(host_ip)))
+
+        try:
+            ping_response, addr = self.socket.recvfrom(4096)
+            ping_response: PingResultMsg = pickle.loads(ping_response)
+            if type(ping_response) != PingResultMsg:
+                return f'O host encontrado no endereço {addr} retornou uma mensagem inesperada.'
+            else:
+                if not ping_response.value:
+                    return f'O host encontrado no endereço {addr} não corresponde a busca efetuada.'
+                else:
+                    return host_ip
+        except socket.timeout:
+                return f'O host buscado não está ativo no momento.'
 
     def resolveCurrentName(self, curr_name: str, curr_addr) -> bool:
         """returns true if destination has been reached (name has been resolved)"""

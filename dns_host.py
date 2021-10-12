@@ -60,19 +60,15 @@ class DNSHost():
 
     def handle_ping(self):
         data, addr = self.sock.recvfrom(4096)
-        msg = pickle.loads(data)
-        port = str(self.port)
+        msg: PingMsg = pickle.loads(data)
 
-        question = str(msg.questions[0]).replace(';', '')
-        address = f'{port[0]}{port[1]}.{port[2]}.{port[3]}.{port[4]}'
-
-        response = dns.DNSRecord(
-            dns.DNSHeader(qr=1,aa=1,ra=0),
-            q=dns.DNSQuestion(question),
-            a=dns.RR(question, rdata=dns.A(address))
-        )      
-
-        self.sock.sendto(pickle.dumps(response), addr)
+        if type(msg) != PingMsg:
+            print(f'Host recebeu de {addr} mensagem que não é ping.')
+        else:
+            print(msg)
+            # TODO: comparar com o domínio completo
+            response = PingResultMsg(True)
+            self.sock.sendto(pickle.dumps(response), addr)
 
     def close(self):
         print('Host encerrado! Até logo!')

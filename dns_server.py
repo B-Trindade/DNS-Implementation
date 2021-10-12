@@ -82,14 +82,16 @@ class DNSserver():
 
                 for ready in r:
                     if ready == self.socket:
-                        msg, client_addr = self.receiveMessage()
+                        msg, sender_addr = self.receiveMessage()
 
                         if type(msg) == RegisterMsg:
-                            reg = self.registerHandler(msg, client_addr)
+                            reg = self.registerHandler(msg, sender_addr)
                             reg.join()
-                        else:
+                        elif type(msg) == dns.DNSRecord:
                             response = self.generateResponse(msg)                           
-                            self.socket.sendto(pickle.dumps(response), client_addr)
+                            self.socket.sendto(pickle.dumps(response), sender_addr)
+                        else:
+                            print(f'Servidor recebeu de {sender_addr} uma mensagem inesperada')
                             
                     elif ready == sys.stdin:
                         cmd = input()
