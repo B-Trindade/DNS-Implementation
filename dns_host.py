@@ -17,6 +17,7 @@ class DNSHost():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.parent_addr = None
         self.name: str = None
+        self.full_domain: str = None
 
     def start(self):
         self.sock.bind((self.ip, self.port))
@@ -32,7 +33,7 @@ class DNSHost():
             self.sock.settimeout(TIMEOUT)
             data, _ = self.sock.recvfrom(1024)
             self.sock.settimeout(None)
-            result = pickle.loads(data)
+            result: RegisterResultMsg = pickle.loads(data)
             if not result.success:
                 print('Não foi possível registrar o host.')
                 if result.error_text:
@@ -40,7 +41,9 @@ class DNSHost():
                 print('Encerrando execução...')
                 exit()
             else:
+                self.full_domain = result.full_domain
                 print(f'Host "{self.name}" registrado com sucesso!')
+                print(f'O domínio completo do host é {self.full_domain}')
         except socket.timeout:
             print('O servidor não respondeu dentro do tempo esperado. '
                 'Tente novamente mais tarde.\n'

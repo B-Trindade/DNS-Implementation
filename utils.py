@@ -13,6 +13,7 @@ class RegisterMsg:
 @dataclass
 class RegisterResultMsg:
     success: bool
+    full_domain: str = None
     error_text: str = None
 
 @dataclass

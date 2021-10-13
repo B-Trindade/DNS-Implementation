@@ -45,8 +45,8 @@ class DNSresolver():
                     self.curr_addr = response.short()
 
                     if self.resolveCurrentName(self.curr_name, self.curr_addr):
-                        host_ip = self.curr_addr.replace('.', '')
-                        return self.ping_host(host_ip)
+                        host_port = self.curr_addr.replace('.', '')
+                        return self.ping_host(host_port)
 
                 elif type(response) == SubdomainNotFoundMsg:
                     return f'O subdomínio {response.subdomain} no servidor {server_addr} não foi encontrado.'
@@ -59,9 +59,9 @@ class DNSresolver():
             'Durante a busca iterativa, um dos servidores não respondeu '
             'dentro do tempo esperado.')
 
-    def ping_host(self, host_ip):
+    def ping_host(self, host_port):
         ping = PingMsg(self.question)
-        self.socket.sendto(pickle.dumps(ping), ('localhost', int(host_ip)))
+        self.socket.sendto(pickle.dumps(ping), ('localhost', int(host_port)))
 
         try:
             ping_response, addr = self.socket.recvfrom(4096)
@@ -72,7 +72,7 @@ class DNSresolver():
                 if not ping_response.value:
                     return f'O host encontrado no endereço {addr} não corresponde a busca efetuada.'
                 else:
-                    return host_ip
+                    return host_port
         except socket.timeout:
                 return f'O host buscado não está ativo no momento.'
 

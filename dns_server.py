@@ -34,7 +34,6 @@ class DNSserver():
 
     def __init__(self) -> None:
         self.ip = 'localhost' # restringe para processos internos por eficiencia
-        
         self.domain = input('Entre com o nome do domínio (para root use "."): ')
         if self.domain != '.':
             # address 127.0.0.1:53000 is reserved for the root server
@@ -49,6 +48,7 @@ class DNSserver():
             # root address must be known
             self.port = 53000
             self.parent_addr = None
+            self.full_domain = self.domain
 
         # dict mapping hosts and servers to their respective ips
         self.hosts = {}
@@ -85,7 +85,7 @@ class DNSserver():
                         msg, sender_addr = self.receiveMessage()
 
                         if type(msg) == RegisterMsg:
-                            reg = self.registerHandler(msg, sender_addr)
+                            reg = self.hanlde_register(msg, sender_addr)
                             reg.join()
                         elif type(msg) == dns.DNSRecord:
                             response = self.generateResponse(msg)                           
@@ -117,7 +117,7 @@ class DNSserver():
             self.socket.settimeout(TIMEOUT)
             data, _ = self.socket.recvfrom(1024)
             self.socket.settimeout(None)
-            result = pickle.loads(data)
+            result: RegisterResultMsg = pickle.loads(data)
             if not result.success:
                 print('Não foi possível registrar o server.')
                 if result.error_text:
@@ -125,7 +125,9 @@ class DNSserver():
                 print('Encerrando execução...')
                 exit()
             else:
+                self.full_domain = result.full_domain
                 print(f'Server "{self.domain}" registrado com sucesso!')
+                print(f'O domínio completo do server é {self.full_domain}')
         except socket.timeout:
             print('O servidor não respondeu dentro do tempo esperado. '
                 'Tente novamente mais tarde.\n'
@@ -144,18 +146,23 @@ class DNSserver():
         return data, addr
 
     @threaded
-    def registerHandler(self, msg: RegisterMsg, addr):
-
+    def hanlde_register(self, msg: RegisterMsg, addr):
+        '''Given a RegisterMsg, register the server/host as child and sends back a 
+        message informing whether the register was succeeded. Also sends back the 
+        full domain of the new server/host.
+        '''
         self.lock.acquire()
         if msg.type == TypeEnum.HOST:
             self.hosts[msg.name] = addr[1]
-            result = RegisterResultMsg(True)
-            self.socket.sendto(pickle.dumps(result), addr)
         elif msg.type == TypeEnum.SERVER:
             self.subdomains[msg.name] = addr[1]
-            result = RegisterResultMsg(True)
-            self.socket.sendto(pickle.dumps(result), addr)
         self.lock.release()
+
+        # se o server for o root, não deve concatenar nada ao domínio do filho
+        # se não for o root, concaneta o nome do filho com o domínio completo do server
+        full_domain = msg.name + ('' if self.domain == '.' else '.'+self.full_domain)
+        result = RegisterResultMsg(True, full_domain=full_domain)
+        self.socket.sendto(pickle.dumps(result), addr)
 
         print(f'Novo {msg.type.value} registrado:')
         print(f'{msg.name} => {addr}')
