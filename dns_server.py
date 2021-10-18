@@ -1,6 +1,6 @@
-"""
+'''
 Implementation of DNS server
-"""
+'''
 
 import random as rand
 import socket
@@ -22,12 +22,12 @@ def threaded(fn):
     return wrapper
 
 class DNSserver():
-    """
+    '''
     A server must register either a Host process or a Server process:
         - a HOST will provide a pair (hostname, PID)
         - a SERVER will provide a pair (dns, PID)
     The lookup after no ENTRY is found is implemented by the RESOLVER.
-    """
+    '''
 
     def __init__(self) -> None:
         self.ip = 'localhost' # restringe para processos internos por eficiencia
@@ -75,13 +75,13 @@ class DNSserver():
 
                 for ready in r:
                     if ready == self.socket:
-                        msg, sender_addr = self.receiveMessage()
+                        msg, sender_addr = self.receive_message()
 
                         if type(msg) == RegisterMsg:
-                            reg = self.hanlde_register(msg, sender_addr)
+                            reg = self.handle_register(msg, sender_addr)
                             reg.join()
                         elif type(msg) == dns.DNSRecord:
-                            response = self.generateResponse(msg)                           
+                            response = self.generate_response(msg)                           
                             self.socket.sendto(pickle.dumps(response), sender_addr)
                         else:
                             print(f'Servidor recebeu de {sender_addr} uma mensagem inesperada')
@@ -134,20 +134,22 @@ class DNSserver():
             exit()
 
     def display_server_info(self):
+        '''Display where the server is hosted and his domain name.'''
         print('\n===================================================')
         print(f'Server hospedado em: "{self.ip}:{self.port}".')
         print(f'Domínio: {self.domain}')
         print(f'Domínio completo: {self.full_domain}')
         print('===================================================\n')
 
-    def receiveMessage(self):
+    def receive_message(self):
+        '''Receives a message and converts the bytes.'''
         data, addr = self.socket.recvfrom(BUFSIZE)
         data = pickle.loads(data)
 
         return data, addr
 
     @threaded
-    def hanlde_register(self, msg: RegisterMsg, addr):
+    def handle_register(self, msg: RegisterMsg, addr):
         '''Given a RegisterMsg, register the server/host as child and sends back a 
         message informing whether the register was succeeded. Also sends back the 
         full domain of the new server/host.
@@ -168,7 +170,7 @@ class DNSserver():
         print(f'Novo {msg.type.value} registrado:')
         print(f'{msg.name} => {addr}')
 
-    def generateResponse(self, msg):
+    def generate_response(self, msg):
         # !! if running on different machines, use rdata=dns.A(question) !!
         question = str(msg.questions[0]).replace(';', '')
         # !!!encodes the port in IP format (USE ONLY IF RUNNING ON LOCALHOSTS)!!!
@@ -177,13 +179,14 @@ class DNSserver():
         name = q_parts[-2] # gets the next server/host
 
         if name in self.hosts:
-            return self.createDNSRecordResponse(question, self.hosts.get(name))
+            return self.create_DNS_record_response(question, self.hosts.get(name))
         elif name in self.subdomains:
-            return self.createDNSRecordResponse(question, self.subdomains.get(name))
+            return self.create_DNS_record_response(question, self.subdomains.get(name))
         else:
             return SubdomainNotFoundMsg(name)
 
-    def createDNSRecordResponse(self, question, addr):
+    def create_DNS_record_response(self, question, addr):
+        '''Creates a DNSRecord instance with the given address and question'''
         str_addr = str(addr)
         address = str_addr[0] + str_addr[1] + '.' + str_addr[2] + '.' + str_addr[3] + '.' + str_addr[4]
 

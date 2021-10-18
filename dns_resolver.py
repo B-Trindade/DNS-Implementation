@@ -5,11 +5,11 @@ import dnslib as dns
 from utils import *
 
 class DNSresolver():
-    """
+    '''
     The resolver must be able to take in multiple request simultaneously,
     from the clients and from the hosts. It is responsible for navigating the
     DNS server tree through iterative lookups as well as caching recent results.
-    """
+    '''
 
     def __init__(self, question: str, cliSocket: socket.socket) -> None:
         self.question = question
@@ -22,6 +22,9 @@ class DNSresolver():
         pass
     
     def getHostIP(self):
+        '''Finds the host IP, in an iterative way. The iterative search starts 
+        on the root server. When the host IP is found, The resolver sends it a 
+        ping message.'''
         # sends the first message that goes to the root server
         q = dns.DNSRecord.question(self.question)
         self.socket.sendto(pickle.dumps(q), ('localhost', self.curr_addr))
@@ -42,17 +45,18 @@ class DNSresolver():
                         return self.ping_host(host_port)
 
                 elif type(response) == SubdomainNotFoundMsg:
-                    return f'O subdomínio {response.subdomain} no servidor {server_addr} não foi encontrado.'
+                    return f'O subdomínio {response.subdomain} não foi encontrado no servidor {server_addr}.'
 
                 else:
                     return f'O servidor {server_addr} retornou uma mensagem inesperada.'
 
         except socket.timeout:
-            return ('Não foi possível encontrar o endereço informado.'
+            return ('Não foi possível encontrar o endereço informado. '
             'Durante a busca iterativa, um dos servidores não respondeu '
             'dentro do tempo esperado.')
 
     def ping_host(self, host_port):
+        '''Sends a ping message to the host, checking if it is the desired one and is still alive.'''
         ping = PingMsg(self.question)
         self.socket.sendto(pickle.dumps(ping), ('localhost', int(host_port)))
 
@@ -70,8 +74,7 @@ class DNSresolver():
                 return f'O host buscado não está ativo no momento.'
 
     def resolveCurrentName(self, curr_name: str, curr_addr) -> bool:
-        """returns true if destination has been reached (name has been resolved)"""
-        #curr_name = self.updateName(curr_name)
+        '''Returns true if destination has been reached (name has been resolved)'''
         if curr_name == '':
             return True
         

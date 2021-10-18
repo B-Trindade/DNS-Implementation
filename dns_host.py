@@ -20,6 +20,8 @@ class DNSHost():
         self.display_host_info()
 
     def register_host(self):
+        '''Sends a register message to the parent server, 
+        waits for the answer and treats it'''
         self.get_host_info()
         data = RegisterMsg(TypeEnum.HOST, self.name)
         self.sock.sendto(pickle.dumps(data), self.parent_addr)
@@ -49,6 +51,7 @@ class DNSHost():
             exit()
 
     def display_host_info(self):
+        '''Display where the host is hosted and his domain name.'''
         print('\n===================================================')
         print(f'Host hospedado em: "{self.ip}:{self.port}".')
         print(f'Domínio: {self.name}')
@@ -56,12 +59,14 @@ class DNSHost():
         print('===================================================\n')
 
     def get_host_info(self):
+        '''Reads the name and parent address from the console.'''
         self.name = input('Entre com o nome do domínio: ')
         parent_ip = 'localhost' #input('IP do servidor:')
         parent_port = input('Entre com a porta do server pai: ')
         self.parent_addr = (parent_ip, int(parent_port))
 
     def handle_ping(self):
+        '''Receives the ping message and treats it.'''
         data, addr = self.sock.recvfrom(BUFSIZE)
         msg: PingMsg = pickle.loads(data)
 
