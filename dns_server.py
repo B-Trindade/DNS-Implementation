@@ -64,15 +64,12 @@ class DNSserver():
 
     def start(self):
         self.socket.bind((self.ip, self.port))
-        print('\n===================================================')
-        print(f'Server hospedado em: "{self.ip}:{self.port}".')
-        print(f'Domínio: {self.domain}')
-        print('===================================================\n')
 
         #self.socket.setblocking(False)
         try:
             if self.parent_addr is not None:
                 self.register_in_parent()
+            self.display_server_info()
             while True:
                 r, w, x = s.select(self.entry_points, [], [])
 
@@ -94,6 +91,8 @@ class DNSserver():
                         print('Server> ' + cmd)
                         if cmd == CMD_END:
                             self.socket.close()
+                            print('Servidor encerrado! Até logo!')
+                            exit()
                         elif cmd == CMD_LIST_HOSTS:
                             print(self.hosts)
                         elif cmd == CMD_LIST_SUBDOMAINS:
@@ -111,7 +110,7 @@ class DNSserver():
         self.socket.sendto(pickle.dumps(data), self.parent_addr)
         try:
             self.socket.settimeout(TIMEOUT)
-            data, _ = self.socket.recvfrom(1024)
+            data, _ = self.socket.recvfrom(BUFSIZE)
             self.socket.settimeout(None)
             result: RegisterResultMsg = pickle.loads(data)
             if not result.success:
@@ -122,8 +121,7 @@ class DNSserver():
                 exit()
             else:
                 self.full_domain = result.full_domain
-                print(f'Server "{self.domain}" registrado com sucesso!')
-                print(f'O domínio completo do server é {self.full_domain}')
+                print(f'Server registrado com sucesso!')
         except socket.timeout:
             print('O servidor não respondeu dentro do tempo esperado. '
                 'Tente novamente mais tarde.\n'
@@ -135,8 +133,15 @@ class DNSserver():
             print('Encerrando execução...')
             exit()
 
+    def display_server_info(self):
+        print('\n===================================================')
+        print(f'Server hospedado em: "{self.ip}:{self.port}".')
+        print(f'Domínio: {self.domain}')
+        print(f'Domínio completo: {self.full_domain}')
+        print('===================================================\n')
+
     def receiveMessage(self):
-        data, addr = self.socket.recvfrom(4096)
+        data, addr = self.socket.recvfrom(BUFSIZE)
         data = pickle.loads(data)
 
         return data, addr

@@ -3,6 +3,7 @@ from enum import Enum
 
 TIMEOUT = 3
 CMD_END = 'end'
+BUFSIZE = 4096
 
 class TypeEnum(Enum):
     HOST = 'Host'

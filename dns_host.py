@@ -16,9 +16,8 @@ class DNSHost():
 
     def start(self):
         self.sock.bind((self.ip, self.port))
-        print('\n===================================================')
-        print(f'Host hospedado em: "{self.ip}:{self.port}".')
-        print('===================================================\n')
+        self.register_host()
+        self.display_host_info()
 
     def register_host(self):
         self.get_host_info()
@@ -26,7 +25,7 @@ class DNSHost():
         self.sock.sendto(pickle.dumps(data), self.parent_addr)
         try:
             self.sock.settimeout(TIMEOUT)
-            data, _ = self.sock.recvfrom(1024)
+            data, _ = self.sock.recvfrom(BUFSIZE)
             self.sock.settimeout(None)
             result: RegisterResultMsg = pickle.loads(data)
             if not result.success:
@@ -37,8 +36,7 @@ class DNSHost():
                 exit()
             else:
                 self.full_domain = result.full_domain
-                print(f'Host "{self.name}" registrado com sucesso!')
-                print(f'O domínio completo do host é {self.full_domain}')
+                print('Host registrado com sucesso!')
         except socket.timeout:
             print('O servidor não respondeu dentro do tempo esperado. '
                 'Tente novamente mais tarde.\n'
@@ -50,6 +48,13 @@ class DNSHost():
             print('Encerrando execução...')
             exit()
 
+    def display_host_info(self):
+        print('\n===================================================')
+        print(f'Host hospedado em: "{self.ip}:{self.port}".')
+        print(f'Domínio: {self.name}')
+        print(f'Domínio completo: {self.full_domain}')
+        print('===================================================\n')
+
     def get_host_info(self):
         self.name = input('Entre com o nome do domínio: ')
         parent_ip = 'localhost' #input('IP do servidor:')
@@ -57,7 +62,7 @@ class DNSHost():
         self.parent_addr = (parent_ip, int(parent_port))
 
     def handle_ping(self):
-        data, addr = self.sock.recvfrom(4096)
+        data, addr = self.sock.recvfrom(BUFSIZE)
         msg: PingMsg = pickle.loads(data)
 
         if type(msg) != PingMsg:
@@ -74,13 +79,12 @@ class DNSHost():
 def main():
     host = DNSHost()
     host.start()
-    host.register_host()
 
     entry_points = [host.sock, sys.stdin]
 
-    r, w, x = select(entry_points, [], [])
 
     while True:
+        r, w, x = select(entry_points, [], [])
         for ready in r:
             if ready == host.sock:
                 host.handle_ping()

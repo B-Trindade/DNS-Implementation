@@ -28,8 +28,8 @@ class DNSresolver():
 
         try:
             while True:
-                response, server_addr = self.socket.recvfrom(4096)
-                print(f'Resolver recebeu mensagem de {server_addr}')
+                response, server_addr = self.socket.recvfrom(BUFSIZE)
+                # print(f'Resolver recebeu mensagem de {server_addr}')
                 response = pickle.loads(response)
 
                 if type(response) == dns.DNSRecord:
@@ -57,7 +57,7 @@ class DNSresolver():
         self.socket.sendto(pickle.dumps(ping), ('localhost', int(host_port)))
 
         try:
-            ping_response, addr = self.socket.recvfrom(4096)
+            ping_response, addr = self.socket.recvfrom(BUFSIZE)
             ping_response: PingResultMsg = pickle.loads(ping_response)
             if type(ping_response) != PingResultMsg:
                 return f'O host encontrado no endereço {addr} retornou uma mensagem inesperada.'
@@ -65,7 +65,7 @@ class DNSresolver():
                 if not ping_response.value:
                     return f'O host encontrado no endereço {addr} não corresponde a busca efetuada.'
                 else:
-                    return host_port
+                    return f'O domínio {self.question} está localizado em {addr}'
         except socket.timeout:
                 return f'O host buscado não está ativo no momento.'
 

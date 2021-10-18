@@ -26,7 +26,9 @@ class Client():
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip, self.port))
         print('\n===================================================')
-        print(f'Seja bem vindo!')
+        print('Seja bem vindo!')
+        print(f'Para buscar um domínio, digite o nome do domínio')
+        print(f'Para sair, digite {CMD_END}')
         print('===================================================\n')
 
     def resolve(self, question: str):
