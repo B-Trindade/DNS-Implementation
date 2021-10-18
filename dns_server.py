@@ -6,16 +6,13 @@ import random as rand
 import socket
 import threading
 import sys
-import time
 import select as s
 import dnslib as dns
 import pickle
 from utils import *
 
-CMD_END = 'end'
 CMD_LIST_SUBDOMAINS = 'ls'
 CMD_LIST_HOSTS = 'lh'
-TIMEOUT = 3
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -55,9 +52,7 @@ class DNSserver():
         self.subdomains = {}
 
         # starts the server socket using UDP
-        # TODO: colocar isso no start?
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.bind((self.ip, self.port))
         # select entry points
         self.entry_points = [self.socket, sys.stdin]
 
@@ -68,6 +63,7 @@ class DNSserver():
         return self
 
     def start(self):
+        self.socket.bind((self.ip, self.port))
         print('\n===================================================')
         print(f'Server hospedado em: "{self.ip}:{self.port}".')
         print(f'Domínio: {self.domain}')

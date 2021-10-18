@@ -4,11 +4,6 @@ from select import select
 import random as rand
 import pickle
 from utils import *
-import dnslib as dns
-
-
-CMD_END = 'end'
-TIMEOUT = 3.0
 
 class DNSHost():
     def __init__(self) -> None:
@@ -69,8 +64,7 @@ class DNSHost():
             print(f'Host recebeu de {addr} mensagem que não é ping.')
         else:
             print(msg)
-            # TODO: comparar com o domínio completo
-            response = PingResultMsg(True)
+            response = PingResultMsg(msg.name == self.full_domain)
             self.sock.sendto(pickle.dumps(response), addr)
 
     def close(self):

@@ -1,15 +1,8 @@
-"""TODO"""
-
-import time
 import socket
-import select as s
 import pickle
 import dnslib as dns
-from functools import lru_cache
 
-from utils import PingMsg, PingResultMsg, SubdomainNotFoundMsg
-
-TIMEOUT = 3
+from utils import *
 
 class DNSresolver():
     """

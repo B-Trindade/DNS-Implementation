@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
 
+TIMEOUT = 3
+CMD_END = 'end'
+
 class TypeEnum(Enum):
     HOST = 'Host'
     SERVER = 'Server'

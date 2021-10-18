@@ -1,10 +1,5 @@
-"""TODO"""
-
-import time
 import socket
 import random as rand
-import multiprocessing
-from functools import lru_cache
 from dns_resolver import DNSresolver as Resolver
 
 CMD_END = 'end'
